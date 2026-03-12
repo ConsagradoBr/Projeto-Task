@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>SPA ToDo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- PAINEL LOGIN -->
+    <section id="loginPanel" class="card login-card" style="display:none;">
+      <h1>Login</h1>
+      <p class="subtitle">
+        Usuário: <strong>aluno</strong> | Senha: <strong>senha123</strong>
+      </p>
+
+      <label for="username">Usuário</label>
+      <input type="text" id="username" placeholder="Digite o usuário" autocomplete="username" />
+
+      <label for="password">Senha</label>
+      <input type="password" id="password" placeholder="Digite a senha" autocomplete="current-password" />
+
+      <button id="btnLogin">Entrar</button>
+      <p class="error" id="loginMsg" style="display:none;"></p>
+    </section>
+
+    <!-- PAINEL APP -->
+    <section id="appPanel" class="card" style="display:none;">
+      <header class="app-header">
+        <h2 class="app-title">Minhas Tarefas</h2>
+        <button id="btnLogout" style="width:auto;margin-top:0;padding:10px 12px;">Sair</button>
+      </header>
+
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input id="newTask" class="input-mini" placeholder="Nova tarefa" />
+        <button id="btnAdd" style="margin-top:0;">Adicionar</button>
+      </div>
+
+      <ul id="taskList" style="margin-top:12px;"></ul>
+    </section>
+
+  </div>
+
+  <script src="apps.js"></script>
+</body>
+
+</html>

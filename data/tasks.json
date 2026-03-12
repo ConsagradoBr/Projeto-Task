@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "title": "Exemplo: estudar Express",
+    "completed": false
+  },
+  {
+    "id": 2,
+    "title": "Configurar SPA básica",
+    "completed": true
+  },
+  {
+    "id": 3,
+    "title": "Ministrar aula no terceiro ds",
+    "completed": true
+  }
+]
