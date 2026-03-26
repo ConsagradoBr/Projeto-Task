@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const session = require('express-session');
+const { kStringMaxLength } = require('buffer');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -75,70 +76,92 @@ app.post('/login', (req, res) => {
 
   const user = users.find(u => u.username === username && u.password === password);
 
-  if (!user) 
-    return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+  if (!user)
+    return res.status(401).json({ success: false, message: 'Credenciais Inválidas' });
 
   req.session.user = { id: user.id, username: user.username };
-  return res.json({ success: true, user: { id: user.id, username: user.username }});
+
+  return res.json({ success: true, user: { id: user.id, username: user.username } });
 });
 
-//logout - rota
+//rota logout
 app.post('/logout', (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// se logado decidir para onde ir ]
-app.get('/session', (req, res) => {
-  if (!req.session?.user?.user)         
-    return res.status(401).json({ message: 'Não autenticado' });
+//se logado, decidir para onde ir (painel)
+app.get('/me', (req, res) => {
+  if (!req.session?.user)
+    return res.status(401).json({ authenticated: false });
 
-  return res.json({ user: req.session.user });
+  res.json({ authenticated: true, user: req.session.user });
 });
 
-// CRUD tarefas - rotas
+//CRUD para tarefas
+// pegar as tarefas
 app.get('/tasks', requireAuth, (req, res) => {
   const tasks = readJson(tasksFile);
-  return res.json(tasks);
-}); 
+  res.json(tasks);
+});
 
-// INCLUIR NOVA TAREFA
+//incluir nova tarefa
 app.post('/tasks', requireAuth, (req, res) => {
   const { title, completed } = req.body || {};
-  if (!title) 
+
+  if (!title)
     return res.status(400).json({ message: 'Título é obrigatório' });
 
   const tasks = readJson(tasksFile);
-  const newId = tasks.reduce((maxId, t) => Math.max(maxId, t.id), 0) + 1;
-  const newTask = { id: newId, title, completed: !!completed };
-  tasks.push(newTask);
+  const nextId = tasks.reduce((max, t) => Math.max(max, t.id), 0) + 1;
+
+  const t = { id: nextId, title, completed: !!completed };
+
+  tasks.push(t);
   writeJson(tasksFile, tasks);
+  res.json(t);
 });
 
+// atualizar o registro de tarefas
 app.put('/tasks/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { title, completed } = req.body || {};
 
   const tasks = readJson(tasksFile);
 
-  const taskIndex = tasks.findIndex(t => t.id === id);
+  const t = tasks.find(x => x.id === id);
 
-  if (!t) 
-    return res.status(404).json({ message: 'Tarefa não encontrada' });
-  if (title  !==    undefined)
-    t.titler = title;
-  
+  if (!t)
+    return res.status(404).json({ message: 'Tarefa não encontrada!' });
+
+  if (title !== undefined)
+    t.title = title;
+
   writeJson(tasksFile, tasks);
-  return res.json(t);
-}); 
+  res.json(t);
+});
 
- app.delete( '/tasks/:id', requireAuth, (req, res) => {
+app.delete('/tasks/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const tasks = readjson (tasksFile);
-  const idx = tasks.findIndex(t => t.id === id);
+  const tasks = readJson(tasksFile);
 
-  if (idx === -1) 
-    return res.status(404).json({ message: 'Tarefa não encontrada' });  
+  const idx = tasks.findIndex(x => x.id === id);
+
+  if (idx === -1)
+    return res.status(404).json({ message: 'Tarefa não encontrada' });
+
   const [removed] = tasks.splice(idx, 1);
+
   writeJson(tasksFile, tasks);
-  return res.json(removed);  
+  res.json(removed);
+
+});
+
+//rota para comando desconhecido - **404**
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ponto de entrada
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });
