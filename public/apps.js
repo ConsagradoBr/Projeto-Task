@@ -3,22 +3,38 @@ function show(panel) {
     document.getElementById('appPanel').style.display = panel === 'app' ? 'block' : 'none';
 }
 
-//funcao para mostrar as tarefas
+//funcao para mostrar as tarefas 
 function renderTasks(list) {
     const ul = document.getElementById('taskList');
     ul.innerHTML = '';
 
-    list.forEach(t => {
+    // Ordena em ordem alfabética
+    const sortedList = [...list].sort((a, b) => a.title.localeCompare(b.title));
+
+    // Aplica o filtro
+    const filter = document.getElementById('filter').value;
+
+    const filteredList = sortedList.filter(t => {
+        if (filter === 'pendentes') return !t.completed;
+        if (filter === 'concluidas') return t.completed;
+        return true; 
+    });
+
+    filteredList.forEach(t => {
         const li = document.createElement('li');
 
         const title = document.createElement('span');
         title.className = 'task-title';
         title.textContent = t.title;
+        title.style.cursor = 'pointer';
+        title.title = 'Clique duas vezes para editar';
+
+        // Duplo clique para editar
+        title.addEventListener('dblclick', () => editTask(t.id, t.title));
 
         const cb = document.createElement('input');
-        cb.className = 'checkBox';
-        cb.type = 'checkBox';
-        cb.checked = !t.completed;
+        cb.type = 'checkbox';
+        cb.checked = t.completed;  
 
         cb.addEventListener('change', async () => {
             await fetch(`/tasks/${t.id}`, {
@@ -28,24 +44,33 @@ function renderTasks(list) {
             });
             await fetchTasks();
         });
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Editar';
+        editBtn.style.marginRight = '5px';
+        editBtn.addEventListener('click', () => editTask(t.id, t.title));
+
         const del = document.createElement('button');
         del.textContent = 'Excluir';
         del.style.width = 'auto';
         del.style.marginTop = '0';
         del.style.padding = '8px 10px';
         del.addEventListener('click', async () => {
-            const res = await fetch(`/tasks/${t.id}`,
-                { method: 'DELETE' });
-            await fetchTasks();
+            if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                await fetch(`/tasks/${t.id}`, { method: 'DELETE' });
+                await fetchTasks();
+            }
         });
 
         const actions = document.createElement('span');
         actions.className = 'task-cta';
         actions.appendChild(cb);
+        actions.appendChild(editBtn);
         actions.appendChild(del);
+
         li.appendChild(title);
         li.appendChild(actions);
-        ul.appendChild(li);
+        ul.appendChild(li); 
     });
 }
 
@@ -70,6 +95,19 @@ async function checkAuthAndInit() {
     } else {
         show('login');
     }
+}
+
+// Função para editar tarefa
+async function editTask(id, currentTitle) {
+    const newTitle = prompt('Editar tarefa:', currentTitle);
+    if (newTitle === null || newTitle.trim() === '' || newTitle === currentTitle) return;
+
+    await fetch(`/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-type': 'application/json' },
+        body: JSON.stringify({ title: newTitle.trim() })
+    });
+    await fetchTasks();
 }
 
 //listener para quando
@@ -104,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        show(app);
+        show('app');
         await fetchTasks();
     });
 

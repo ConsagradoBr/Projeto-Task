@@ -121,7 +121,6 @@ app.post('/tasks', requireAuth, (req, res) => {
   res.json(t);
 });
 
-// atualizar o registro de tarefas
 app.put('/tasks/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { title, completed } = req.body || {};
@@ -133,13 +132,15 @@ app.put('/tasks/:id', requireAuth, (req, res) => {
   if (!t)
     return res.status(404).json({ message: 'Tarefa não encontrada!' });
 
-  if (title !== undefined)
-    t.title = title;
+  if (title !== undefined) t.title = title;
+  //esquecemos disso aqui
+  if (completed !== undefined) t.completed = !!completed;
 
   writeJson(tasksFile, tasks);
   res.json(t);
 });
 
+// Deletar tarefa
 app.delete('/tasks/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const tasks = readJson(tasksFile);
@@ -153,15 +154,14 @@ app.delete('/tasks/:id', requireAuth, (req, res) => {
 
   writeJson(tasksFile, tasks);
   res.json(removed);
-
 });
 
-//rota para comando desconhecido - **404**
+//rota para comando desconhecido
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ponto de entrada
+// Ponto de entrada
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
