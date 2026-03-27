@@ -34,7 +34,7 @@ function renderTasks(list) {
         del.style.marginTop = '0';
         del.style.padding = '8px 10px';
         del.addEventListener('click', async () => {
-            await fetch(`/tasks/${t.id}`,
+            const res = await fetch(`/tasks/${t.id}`,
                 { method: 'DELETE' });
             await fetchTasks();
         });
