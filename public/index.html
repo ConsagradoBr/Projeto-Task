@@ -10,16 +10,14 @@
 
 <body>
   <div class="container">
-
-    <!-- PAINEL LOGIN -->
     <section id="loginPanel" class="card login-card" style="display:none;">
       <h1>Login</h1>
       <p class="subtitle">
-        Usuário: <strong>aluno</strong> | Senha: <strong>senha123</strong>
+        Usuario: <strong>aluno</strong> | Senha: <strong>senha123</strong>
       </p>
 
-      <label for="username">Usuário</label>
-      <input type="text" id="username" placeholder="Digite o usuário" autocomplete="username" />
+      <label for="username">Usuario</label>
+      <input type="text" id="username" placeholder="Digite o usuario" autocomplete="username" />
 
       <label for="password">Senha</label>
       <input type="password" id="password" placeholder="Digite a senha" autocomplete="current-password" />
@@ -28,31 +26,31 @@
       <p class="error" id="loginMsg" style="display:none;"></p>
     </section>
 
-    <!-- PAINEL APP -->
     <section id="appPanel" class="card" style="display:none;">
       <header class="app-header">
         <h2 class="app-title">Minhas Tarefas</h2>
-        <button id="btnLogout" style="width:auto;margin-top:0;padding:10px 12px;">Sair</button>
+        <button id="btnLogout" class="button-ghost">Sair</button>
       </header>
 
-            <div style="display:flex;gap:10px;align-items:center;">
+      <div class="task-composer">
         <input id="newTask" class="input-mini" placeholder="Nova tarefa" />
-        <button id="btnAdd" style="margin-top:0;">Adicionar</button>
+        <button id="btnAdd" class="button-inline">Adicionar</button>
       </div>
 
-      <!-- FILTRO -->
-      <div style="margin: 15px 0 10px 0;">
-        <label style="font-weight: bold; margin-right: 8px;">Filtrar:</label>
-        <select id="filter" onchange="fetchTasks()" style="padding: 6px 10px; font-size: 14px;">
-          <option value="todas">Todas as tarefas</option>
-          <option value="pendentes">Pendentes</option>
-          <option value="concluidas">Concluídas</option>
-        </select>
-      </div>
+      <section class="filter-row" aria-label="Filtros de tarefas">
+        <label class="filter-row-label">Filtrar:</label>
 
-      <ul id="taskList" style="margin-top:12px;"></ul>
+        <input type="hidden" id="filter" value="todas" />
+
+        <div class="filter-group" role="tablist" aria-label="Filtrar tarefas">
+          <button type="button" class="filter-chip is-active" data-filter="todas" data-label="Todas" aria-pressed="true">Todas</button>
+          <button type="button" class="filter-chip" data-filter="pendentes" data-label="Pendentes" aria-pressed="false">Pendentes</button>
+          <button type="button" class="filter-chip" data-filter="concluidas" data-label="Concluidas" aria-pressed="false">Concluidas</button>
+        </div>
+      </section>
+
+      <ul id="taskList" class="task-list"></ul>
     </section>
-
   </div>
 
   <script src="apps.js"></script>

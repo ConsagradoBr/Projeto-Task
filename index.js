@@ -99,12 +99,14 @@ app.get('/me', (req, res) => {
 
 //CRUD para tarefas
 // pegar as tarefas
+
 app.get('/tasks', requireAuth, (req, res) => {
   const tasks = readJson(tasksFile);
   res.json(tasks);
 });
 
 //incluir nova tarefa
+
 app.post('/tasks', requireAuth, (req, res) => {
   const { title, completed } = req.body || {};
 
@@ -133,7 +135,7 @@ app.put('/tasks/:id', requireAuth, (req, res) => {
     return res.status(404).json({ message: 'Tarefa não encontrada!' });
 
   if (title !== undefined) t.title = title;
-  //esquecemos disso aqui
+  
   if (completed !== undefined) t.completed = !!completed;
 
   writeJson(tasksFile, tasks);
@@ -141,6 +143,7 @@ app.put('/tasks/:id', requireAuth, (req, res) => {
 });
 
 // Deletar tarefa
+
 app.delete('/tasks/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const tasks = readJson(tasksFile);

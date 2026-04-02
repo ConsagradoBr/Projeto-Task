@@ -3,74 +3,125 @@ function show(panel) {
     document.getElementById('appPanel').style.display = panel === 'app' ? 'block' : 'none';
 }
 
-//funcao para mostrar as tarefas 
+function getCurrentFilter() {
+    return document.getElementById('filter')?.value || 'todas';
+}
+
+function setCurrentFilter(filter) {
+    const filterInput = document.getElementById('filter');
+
+    if (filterInput) {
+        filterInput.value = filter;
+    }
+
+    document.querySelectorAll('.filter-chip').forEach(button => {
+        const isActive = button.dataset.filter === filter;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+    });
+}
+
+function updateFilterButtons(list) {
+    const counts = {
+        todas: list.length,
+        pendentes: list.filter(task => !task.completed).length,
+        concluidas: list.filter(task => task.completed).length
+    };
+
+    document.querySelectorAll('.filter-chip').forEach(button => {
+        const filter = button.dataset.filter;
+        const label = button.dataset.label || button.textContent;
+        button.textContent = `${label} (${counts[filter] || 0})`;
+    });
+}
+
 function renderTasks(list) {
     const ul = document.getElementById('taskList');
     ul.innerHTML = '';
 
-    // Ordena em ordem alfabética
-    const sortedList = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    updateFilterButtons(list);
 
-    // Aplica o filtro
-    const filter = document.getElementById('filter').value;
+    const sortedList = [...list].sort((a, b) =>
+        a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' })
+    );
 
-    const filteredList = sortedList.filter(t => {
-        if (filter === 'pendentes') return !t.completed;
-        if (filter === 'concluidas') return t.completed;
-        return true; 
+    const filter = getCurrentFilter();
+    const filteredList = sortedList.filter(task => {
+        if (filter === 'pendentes') return !task.completed;
+        if (filter === 'concluidas') return task.completed;
+        return true;
     });
 
-    filteredList.forEach(t => {
+    if (!filteredList.length) {
+        const emptyState = document.createElement('li');
+        emptyState.className = 'task-empty';
+        emptyState.textContent =
+            filter === 'todas'
+                ? 'Nenhuma tarefa cadastrada ainda.'
+                : 'Nenhuma tarefa encontrada para esse filtro.';
+
+        ul.appendChild(emptyState);
+        return;
+    }
+
+    filteredList.forEach(task => {
         const li = document.createElement('li');
+        li.className = 'task-item';
 
         const title = document.createElement('span');
         title.className = 'task-title';
-        title.textContent = t.title;
-        title.style.cursor = 'pointer';
+        title.textContent = task.title;
         title.title = 'Clique duas vezes para editar';
 
-        // Duplo clique para editar
-        title.addEventListener('dblclick', () => editTask(t.id, t.title));
+        if (task.completed) {
+            li.classList.add('is-completed');
+            title.classList.add('is-completed');
+        }
+
+        title.addEventListener('dblclick', () => editTask(task.id, task.title));
 
         const cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.checked = t.completed;  
+        cb.className = 'task-status';
+        cb.checked = task.completed;
+        cb.setAttribute(
+            'aria-label',
+            task.completed ? 'Marcar tarefa como pendente' : 'Marcar tarefa como concluida'
+        );
 
         cb.addEventListener('change', async () => {
-            await fetch(`/tasks/${t.id}`, {
+            await fetch(`/tasks/${task.id}`, {
                 method: 'PUT',
-                headers: { 'Content-type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ completed: cb.checked })
             });
+
             await fetchTasks();
         });
 
         const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'task-button';
         editBtn.textContent = 'Editar';
-        editBtn.style.marginRight = '5px';
-        editBtn.addEventListener('click', () => editTask(t.id, t.title));
+        editBtn.addEventListener('click', () => editTask(task.id, task.title));
 
-        const del = document.createElement('button');
-        del.textContent = 'Excluir';
-        del.style.width = 'auto';
-        del.style.marginTop = '0';
-        del.style.padding = '8px 10px';
-        del.addEventListener('click', async () => {
-            if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-                await fetch(`/tasks/${t.id}`, { method: 'DELETE' });
-                await fetchTasks();
-            }
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'task-button task-button-danger';
+        delBtn.textContent = 'Excluir';
+        delBtn.addEventListener('click', async () => {
+            if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+            await fetch(`/tasks/${task.id}`, { method: 'DELETE' });
+            await fetchTasks();
         });
 
-        const actions = document.createElement('span');
+        const actions = document.createElement('div');
         actions.className = 'task-cta';
-        actions.appendChild(cb);
-        actions.appendChild(editBtn);
-        actions.appendChild(del);
+        actions.append(cb, editBtn, delBtn);
 
-        li.appendChild(title);
-        li.appendChild(actions);
-        ul.appendChild(li); 
+        li.append(title, actions);
+        ul.appendChild(li);
     });
 }
 
@@ -92,28 +143,28 @@ async function checkAuthAndInit() {
     if (me.ok) {
         show('app');
         await fetchTasks();
-    } else {
-        show('login');
+        return;
     }
+
+    show('login');
 }
 
-// Função para editar tarefa
 async function editTask(id, currentTitle) {
     const newTitle = prompt('Editar tarefa:', currentTitle);
-    if (newTitle === null || newTitle.trim() === '' || newTitle === currentTitle) return;
+    const trimmedTitle = (newTitle || '').trim();
+
+    if (!trimmedTitle || trimmedTitle === currentTitle) return;
 
     await fetch(`/tasks/${id}`, {
         method: 'PUT',
-        headers: { 'Content-type': 'application/json' },
-        body: JSON.stringify({ title: newTitle.trim() })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimmedTitle })
     });
+
     await fetchTasks();
 }
 
-//listener para quando
-//carregar o html
 document.addEventListener('DOMContentLoaded', async () => {
-
     const btnLogin = document.getElementById('btnLogin');
     const btnAdd = document.getElementById('btnAdd');
     const btnLogout = document.getElementById('btnLogout');
@@ -123,13 +174,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginMsg = document.getElementById('loginMsg');
     const newTask = document.getElementById('newTask');
 
+    document.querySelectorAll('.filter-chip').forEach(button => {
+        button.addEventListener('click', async () => {
+            const nextFilter = button.dataset.filter || 'todas';
+
+            if (nextFilter === getCurrentFilter()) return;
+
+            setCurrentFilter(nextFilter);
+            await fetchTasks();
+        });
+    });
+
+    setCurrentFilter(getCurrentFilter());
+
     btnLogin.addEventListener('click', async () => {
         loginMsg.style.display = 'none';
         loginMsg.textContent = '';
 
         const res = await fetch('/login', {
             method: 'POST',
-            headers: { 'Content-type': 'application/json' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: (username.value || '').trim(),
                 password: (password.value || '').trim()
@@ -137,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (!res.ok) {
-            loginMsg.textContent = 'Credenciais Inválidas';
+            loginMsg.textContent = 'Credenciais invalidas';
             loginMsg.style.display = 'block';
             return;
         }
@@ -151,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         show('login');
     });
 
-    btnAdd.addEventListener('click', async () => {
+    async function handleAddTask() {
         const title = (newTask.value || '').trim();
 
         if (!title) return;
@@ -169,8 +233,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         newTask.value = '';
         await fetchTasks();
-    });
+    }
 
+    btnAdd.addEventListener('click', handleAddTask);
+
+    newTask.addEventListener('keydown', async event => {
+        if (event.key !== 'Enter') return;
+
+        event.preventDefault();
+        await handleAddTask();
+    });
 
     await checkAuthAndInit();
 });
