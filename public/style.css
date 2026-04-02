@@ -2,9 +2,9 @@
   --bg: #f5f7fb;
   --card: #ffffff;
   --border: #e5e7eb;
-  --primary: #2d3136;
-  --primary-dark: #1f2327;
-  --primary-soft: #eef1f4;
+  --primary: #163b6d;
+  --primary-dark: #112b4f;
+  --primary-soft: #e8eef7;
   --text: #111827;
   --muted: #6b7280;
   --success: #16a34a;
@@ -80,8 +80,8 @@ input[type="password"],
 
 input:focus {
   outline: none;
-  border-color: #7b8794;
-  box-shadow: 0 0 0 3px rgba(45, 49, 54, 0.12);
+  border-color: #3a5f91;
+  box-shadow: 0 0 0 3px rgba(22, 59, 109, 0.16);
 }
 
 button {
@@ -233,11 +233,11 @@ button:active {
 }
 
 .task-button-danger {
-  background: #454b52;
+  background: #244a7d;
 }
 
 .task-button-danger:hover {
-  background: #2d3136;
+  background: #163b6d;
 }
 
 .task-empty {
